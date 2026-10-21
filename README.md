@@ -1,6 +1,9 @@
-# 🎵 AuraWave 線上音樂播放器範本 (Online Music Player)
+# 🎵 AuraWave 線上音樂播放器 (Online Music Player)
 
-這是一個現代化、即開即用、無須安裝任何依賴的 Web 線上音樂播放器範本。
+> 🌐 **線上公開體驗網址**：[https://stteach01-jpg.github.io/music-player/](https://stteach01-jpg.github.io/music-player/)  
+> 📦 **GitHub 儲存庫**：[https://github.com/stteach01-jpg/music-player](https://github.com/stteach01-jpg/music-player)
+
+這是一個現代化、即開即用、無須安裝任何依賴的 Web 線上音樂播放器。支援手機與電腦瀏覽器，開啟網址即可隨處使用。
 
 ## ✨ 功能特色
 
