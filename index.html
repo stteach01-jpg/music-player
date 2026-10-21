@@ -1,0 +1,2210 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuraWave 音樂播放器 | Online Music Player</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090b10;
+      --bg-card: rgba(18, 22, 34, 0.75);
+      --bg-card-border: rgba(255, 255, 255, 0.08);
+      --accent-primary: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.35);
+      --accent-cyan: #06b6d4;
+      --accent-pink: #ec4899;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --player-track-bg: rgba(255, 255, 255, 0.1);
+      --lyrics-active: #ffffff;
+      --lyrics-inactive: rgba(255, 255, 255, 0.3);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --radius-sm: 10px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Background Glow */
+    .ambient-glow {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .glow-circle {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.25;
+      transition: transform 1.2s ease;
+    }
+
+    .glow-1 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, #6366f1, #3b82f6);
+      top: -100px;
+      left: -100px;
+    }
+
+    .glow-2 {
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, #ec4899, #8b5cf6);
+      bottom: -100px;
+      right: -80px;
+    }
+
+    .glow-3 {
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, #06b6d4, #3b82f6);
+      top: 40%;
+      left: 45%;
+      opacity: 0.15;
+    }
+
+    /* Main Container */
+    .app-container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 30%, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
+      color: white;
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--bg-card-border);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      backdrop-filter: blur(12px);
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      border: none;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #4f46e5, #4338ca);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    .btn-active {
+      background: rgba(99, 102, 241, 0.25);
+      border-color: rgba(99, 102, 241, 0.6);
+      color: #a5b4fc;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .badge-indicator {
+      font-size: 0.68rem;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-indicator.active {
+      background: #10b981;
+      color: #ffffff;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+    }
+
+    /* Balance / Equalizer Popover */
+    .balance-panel-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .setting-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .setting-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.88rem;
+      color: var(--text-main);
+    }
+
+    .setting-desc {
+      font-size: 0.76rem;
+      color: var(--text-dim);
+    }
+
+    .switch-toggle {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: .3s;
+      border-radius: 24px;
+    }
+
+    .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .switch-slider {
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+    }
+
+    input:checked + .switch-slider:before {
+      transform: translateX(20px);
+    }
+
+    .pan-slider-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .pan-label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      min-width: 28px;
+    }
+
+    /* Dual-Panel Layout */
+    .player-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 24px;
+      flex: 1;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* When lyrics are hidden: center and focus the player */
+    .player-grid.lyrics-hidden {
+      grid-template-columns: 1fr;
+      max-width: 760px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .player-grid.lyrics-hidden .lyrics-card {
+      display: none;
+    }
+
+    @media (max-width: 960px) {
+      .player-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Glass Panels */
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-lg);
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Left Panel: Turntable / Visualizer & Controls */
+    .player-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    /* Vinyl / Album Art Area */
+    .visual-stage {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 0;
+    }
+
+    .vinyl-wrapper {
+      position: relative;
+      width: 250px;
+      height: 250px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.6));
+    }
+
+    .vinyl-disc {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle, #1a1c23 0%, #0c0e14 65%, #000 100%);
+      border: 3px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9), 0 0 0 6px rgba(255, 255, 255, 0.03);
+      animation: spin 16s linear infinite;
+      animation-play-state: paused;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .vinyl-grooves {
+      position: absolute;
+      inset: 15px;
+      border-radius: 50%;
+      border: 1px dashed rgba(255, 255, 255, 0.07);
+      pointer-events: none;
+    }
+
+    .vinyl-grooves::before {
+      content: '';
+      position: absolute;
+      inset: 20px;
+      border-radius: 50%;
+      border: 1px dashed rgba(255, 255, 255, 0.05);
+    }
+
+    .vinyl-disc.playing {
+      animation-play-state: running;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .album-art {
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #06b6d4, #ec4899);
+      background-size: 200% 200%;
+      animation: gradientShift 6s ease infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(0, 0, 0, 0.7);
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .album-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .album-center-dot {
+      width: 16px;
+      height: 16px;
+      background: #090b10;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Audio Visualizer Canvas */
+    .visualizer-container {
+      width: 100%;
+      height: 70px;
+      margin-top: 10px;
+      position: relative;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    #visualizerCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Track Metadata Info */
+    .track-info {
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .track-title {
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #fff;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .track-artist {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .track-tag {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 10px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      color: #a5b4fc;
+      font-weight: 500;
+    }
+
+    /* Progress & Seekbar */
+    .progress-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .progress-bar-wrapper {
+      position: relative;
+      width: 100%;
+      height: 8px;
+      background: var(--player-track-bg);
+      border-radius: 999px;
+      cursor: pointer;
+      padding: 4px 0; /* easy hit target */
+      background-clip: content-box;
+      transition: height 0.15s ease;
+    }
+
+    .progress-bar-wrapper:hover {
+      height: 12px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-cyan));
+      border-radius: 999px;
+      width: 0%;
+      position: relative;
+      pointer-events: none;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .progress-handle {
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%) scale(0);
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      transition: transform 0.15s ease;
+    }
+
+    .progress-bar-wrapper:hover .progress-handle {
+      transform: translateY(-50%) scale(1);
+    }
+
+    .time-indicators {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+      font-family: inherit;
+    }
+
+    /* Controls Bar */
+    .controls-main {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+    }
+
+    .control-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      transition: var(--transition);
+      outline: none;
+      position: relative;
+    }
+
+    .control-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+      transform: scale(1.08);
+    }
+
+    .control-btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-play-pause {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+      color: #ffffff;
+      box-shadow: 0 8px 24px var(--accent-glow);
+    }
+
+    .btn-play-pause:hover {
+      background: linear-gradient(135deg, #4f46e5, #2563eb);
+      color: #ffffff;
+      transform: scale(1.06);
+      box-shadow: 0 10px 28px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-skip-label {
+      position: absolute;
+      bottom: 4px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: currentColor;
+    }
+
+    /* Bottom Utility Row: Volume & Speed & Mode */
+    .utility-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .volume-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      max-width: 220px;
+    }
+
+    .volume-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 999px;
+      background: var(--player-track-bg);
+      outline: none;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+      transition: transform 0.1s ease;
+    }
+
+    .volume-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+    }
+
+    .extra-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .speed-btn {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--bg-card-border);
+      padding: 4px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .speed-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    /* Right Panel: Synchronized Lyrics View */
+    .lyrics-card {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      height: 100%;
+      min-height: 450px;
+    }
+
+    .lyrics-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      margin-bottom: 16px;
+    }
+
+    .lyrics-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .lyrics-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      border-radius: 8px;
+    }
+
+    .lyrics-container {
+      flex: 1;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+      padding: 100px 10px 180px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+    }
+
+    /* Custom scrollbar for lyrics */
+    .lyrics-container::-webkit-scrollbar {
+      width: 4px;
+    }
+    .lyrics-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+    }
+
+    .lyric-line {
+      font-size: 1.15rem;
+      line-height: 1.6;
+      color: var(--lyrics-inactive);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transform-origin: left center;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    .lyric-line:hover {
+      color: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .lyric-line.active {
+      color: var(--lyrics-active);
+      font-size: 1.45rem;
+      font-weight: 700;
+      transform: scale(1.04) translateX(6px);
+      text-shadow: 0 0 20px rgba(99, 102, 241, 0.7), 0 0 35px rgba(6, 182, 212, 0.4);
+    }
+
+    .lyric-line.passed {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .empty-lyrics {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      text-align: center;
+      gap: 12px;
+      padding: 40px 20px;
+    }
+
+    /* Drag & Drop Overlay Indicator */
+    .drop-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(99, 102, 241, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-lg);
+      border: 3px dashed #ffffff;
+      z-index: 100;
+      color: #fff;
+      font-size: 1.25rem;
+      font-weight: 600;
+      pointer-events: none;
+      gap: 12px;
+    }
+
+    .drop-overlay.active {
+      display: flex;
+    }
+
+    /* Modal for Edit / Paste Lyrics */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(12px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #141824;
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 580px;
+      padding: 28px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      animation: modalIn 0.25s ease-out;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 8px;
+      transition: var(--transition);
+    }
+
+    .modal-close:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .lyrics-textarea {
+      width: 100%;
+      height: 240px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-sm);
+      color: #f1f5f9;
+      padding: 14px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .lyrics-textarea:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .modal-help {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* Footer hints */
+    .app-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      padding: 10px 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .shortcuts-pill {
+      display: inline-flex;
+      gap: 12px;
+    }
+
+    .kbd {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.72rem;
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+
+    /* Hidden File Inputs */
+    input[type="file"] {
+      display: none;
+    }
+
+    /* Floating Status Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 9999px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      font-size: 0.875rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Glow Effects -->
+  <div class="ambient-glow">
+    <div class="glow-circle glow-1"></div>
+    <div class="glow-circle glow-2"></div>
+    <div class="glow-circle glow-3"></div>
+  </div>
+
+  <!-- Hidden Native Audio Element -->
+  <audio id="audioElement" preload="auto"></audio>
+
+  <!-- File Upload Inputs -->
+  <input type="file" id="audioFileInput" accept="audio/*">
+  <input type="file" id="lyricsFileInput" accept=".lrc,.txt">
+
+  <!-- Main Interface -->
+  <div class="app-container" id="dropZone">
+    <!-- Drop Overlay Indicator -->
+    <div class="drop-overlay" id="dropOverlay">
+      <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+      </svg>
+      <div>放開以匯入音檔或歌詞檔案</div>
+    </div>
+
+    <!-- Header -->
+    <header>
+      <div class="logo">
+        <div class="logo-badge">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+        </div>
+        <span>AuraWave Player</span>
+      </div>
+
+      <div class="header-actions">
+        <!-- Audio Balance Button -->
+        <button class="btn" id="btnAudioBalance" title="平衡音效音量（防止爆音、平準化動態音量與聲道調整）">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          <span>平衡音效</span>
+          <span class="badge-indicator" id="balanceBadge">OFF</span>
+        </button>
+
+        <!-- Toggle Lyrics Visibility Button -->
+        <button class="btn" id="btnToggleLyrics" title="顯示 / 隱藏歌詞 (L)">
+          <svg id="lyricsEyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <span id="toggleLyricsText">隱藏歌詞</span>
+        </button>
+
+        <!-- Demo Song Trigger -->
+        <button class="btn" id="btnLoadDemo" title="切換至內建範例音樂">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          範例示範曲
+        </button>
+
+        <!-- Audio Upload Trigger -->
+        <button class="btn btn-primary" id="btnUploadAudio">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          上傳音檔
+        </button>
+      </div>
+    </header>
+
+    <!-- Content Dual Grid -->
+    <div class="player-grid">
+      <!-- Left Panel: Vinyl Turntable, Visualizer & Controls -->
+      <section class="glass-card player-card">
+        <!-- Turntable Stage -->
+        <div class="visual-stage">
+          <div class="vinyl-wrapper">
+            <div class="vinyl-disc" id="vinylDisc">
+              <div class="vinyl-grooves"></div>
+              <div class="album-art" id="albumCover">
+                <img id="albumArtImg" alt="Album Cover">
+                <div class="album-center-dot"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Realtime Audio Frequency Spectrum Visualizer -->
+          <div class="visualizer-container">
+            <canvas id="visualizerCanvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Song Metadata -->
+        <div class="track-info">
+          <h2 class="track-title" id="trackTitle">未載入音檔</h2>
+          <p class="track-artist" id="trackArtist">點擊上方「上傳音檔」或「範例示範曲」開始聆聽</p>
+          <span class="track-tag" id="trackFormat">MP3 / WAV</span>
+        </div>
+
+        <!-- Progress Seekbar -->
+        <div class="progress-section">
+          <div class="progress-bar-wrapper" id="progressBar">
+            <div class="progress-fill" id="progressFill">
+              <div class="progress-handle"></div>
+            </div>
+          </div>
+          <div class="time-indicators">
+            <span id="currentTime">00:00</span>
+            <span id="totalDuration">00:00</span>
+          </div>
+        </div>
+
+        <!-- Playback Main Controls -->
+        <div class="controls-main">
+          <!-- Rewind -10s -->
+          <button class="control-btn" id="btnBackward" title="倒退 10 秒 (←)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/>
+            </svg>
+            <span class="btn-skip-label">10</span>
+          </button>
+
+          <!-- Stop Button -->
+          <button class="control-btn" id="btnStop" title="停止播放 (S)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="5" y="5" width="14" height="14" rx="2.5"></rect>
+            </svg>
+          </button>
+
+          <!-- Play / Pause Button -->
+          <button class="control-btn btn-play-pause" id="btnPlayPause" title="播放 / 暫停 (空白鍵)">
+            <svg id="playIcon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="6 3 20 12 6 21 6 3"></polygon>
+            </svg>
+            <svg id="pauseIcon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+              <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+              <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+            </svg>
+          </button>
+
+          <!-- Forward +10s -->
+          <button class="control-btn" id="btnForward" title="快進 10 秒 (→)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 17l5-5-5-5M6 17l5-5-5-5"/>
+            </svg>
+            <span class="btn-skip-label">10</span>
+          </button>
+
+          <!-- Loop Mode -->
+          <button class="control-btn" id="btnLoop" title="循環播放">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 2l4 4-4 4"/>
+              <path d="M3 11v-1a4 4 0 0 1 4-4h14"/>
+              <path d="M7 22l-4-4 4-4"/>
+              <path d="M21 13v1a4 4 0 0 1-4 4H3"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Volume & Rate Utility -->
+        <div class="utility-bar">
+          <div class="volume-group">
+            <button class="control-btn" id="btnMute" style="width:32px; height:32px;" title="靜音 / 開啟聲音 (M)">
+              <svg id="volumeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              </svg>
+            </button>
+            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.01" value="0.8" title="音量調節">
+            <span id="volumePercent" style="font-size:0.75rem; color:var(--text-dim); min-width:32px;">80%</span>
+          </div>
+
+          <div class="extra-controls">
+            <!-- Quick Audio Balance Toggle -->
+            <button class="speed-btn" id="btnQuickBalance" title="點擊開關音量平衡，或點擊上方「平衡音效」進行進階設定">
+              平衡: <span id="quickBalanceText">OFF</span>
+            </button>
+            <button class="speed-btn" id="btnPlaybackRate" title="變更播放速度">1.0x</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Panel: Synchronized Dynamic Lyrics -->
+      <section class="glass-card lyrics-card">
+        <div class="lyrics-header">
+          <div class="lyrics-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>歌詞同步滾動</span>
+          </div>
+
+          <div class="lyrics-actions">
+            <button class="btn btn-sm" id="btnUploadLyrics" title="上傳 .lrc 或 .txt 歌詞檔">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              匯入
+            </button>
+            <button class="btn btn-sm" id="btnEditLyrics" title="手動貼上或編輯歌詞">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              編輯
+            </button>
+            <button class="btn btn-sm" id="btnHideLyricsHeader" title="隱藏歌詞面板">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              隱藏
+            </button>
+          </div>
+        </div>
+
+        <!-- Lyrics Scroll Content Area -->
+        <div class="lyrics-container" id="lyricsContainer">
+          <div class="empty-lyrics" id="emptyLyricsPlaceholder">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9 9h.01M15 9h.01M8 15s1.5 2 4 2 4-2 4-2"></path>
+            </svg>
+            <p>目前尚無歌詞檔案</p>
+            <span style="font-size:0.8rem; color:var(--text-dim);">可點擊右上角「匯入歌詞」或點「範例示範曲」體驗同步歌詞效果</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Bottom Footer Hints -->
+    <footer class="app-footer">
+      <div>支援 MP3, WAV, FLAC, OGG, M4A 等音訊格式及 .LRC 時間軸歌詞檔</div>
+      <div class="shortcuts-pill">
+        <span><span class="kbd">空白鍵</span> 播放/暫停</span>
+        <span><span class="kbd">←</span> <span class="kbd">→</span> ±10秒</span>
+        <span><span class="kbd">↑</span> <span class="kbd">↓</span> 音量</span>
+        <span><span class="kbd">S</span> 停止</span>
+        <span><span class="kbd">M</span> 靜音</span>
+        <span><span class="kbd">L</span> 隱藏/顯示歌詞</span>
+        <span><span class="kbd">B</span> 音效平衡</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal: Paste / Edit Lyrics -->
+  <div class="modal-backdrop" id="lyricsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">自訂 / 貼上歌詞</h3>
+        <button class="modal-close" id="btnCloseLyricsModal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="modal-help">支援標準 LRC 時間軸格式（例如 <code>[00:15.30]歌詞第一句</code>）或一般純文字歌詞。若是純文字歌詞，將以平均時間軸呈現。</p>
+      <textarea class="lyrics-textarea" id="lyricsTextarea" placeholder="[00:00.00]歌曲名稱&#10;[00:04.50]這是一首動人的音樂&#10;[00:08.20]星光在黑夜裡閃爍&#10;..."></textarea>
+      <div class="modal-actions">
+        <button class="btn" id="btnCancelLyricsModal">取消</button>
+        <button class="btn btn-primary" id="btnSaveLyricsModal">儲存並套用</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Audio Balance & Normalizer -->
+  <div class="modal-backdrop" id="balanceModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">音效與音量平衡設定</h3>
+        <button class="modal-close" id="btnCloseBalanceModal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="balance-panel-content">
+        <!-- 1. Dynamic Loudness Normalization Switch -->
+        <div class="setting-row">
+          <div class="setting-label-row">
+            <div>
+              <strong style="color:#fff;">動態音量平衡 (Loudness Normalizer)</strong>
+              <div class="setting-desc">自動平準化音量，平滑歌曲忽大忽小的落差，避免突然爆音或音量過低</div>
+            </div>
+            <label class="switch-toggle">
+              <input type="checkbox" id="chkAudioNormalizer" checked>
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:4px 0;">
+
+        <!-- 2. Stereo Panner (Left/Right Balance) -->
+        <div class="setting-row">
+          <div class="setting-label-row">
+            <strong style="color:#fff;">左右聲道平衡 (Stereo Balance)</strong>
+            <span id="panValueText" style="font-size:0.8rem; color:#a5b4fc; font-weight:600;">中央 (Center)</span>
+          </div>
+          <div class="pan-slider-container">
+            <span class="pan-label">L</span>
+            <input type="range" class="volume-slider" id="panSlider" min="-1" max="1" step="0.05" value="0">
+            <span class="pan-label" style="text-align:right;">R</span>
+          </div>
+          <div class="setting-desc">微調左右耳機或喇叭的聲道音量平衡</div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:4px 0;">
+
+        <!-- 3. Preset EQ Sound Modes -->
+        <div class="setting-row">
+          <div class="setting-label-row">
+            <strong style="color:#fff;">音場等化風格 (EQ Mode)</strong>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+            <button class="btn btn-sm btn-active" data-eq="flat" id="eqFlat">標準平衡</button>
+            <button class="btn btn-sm" data-eq="vocal" id="eqVocal">人聲突出</button>
+            <button class="btn btn-sm" data-eq="bass" id="eqBass">低音增強</button>
+            <button class="btn btn-sm" data-eq="night" id="eqNight">深夜柔和</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top:10px;">
+        <button class="btn btn-primary" id="btnDoneBalanceModal" style="width:100%; justify-content:center;">完成設定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Core JavaScript Logic -->
+  <script>
+    // --- Elements ---
+    const audio = document.getElementById('audioElement');
+    const audioFileInput = document.getElementById('audioFileInput');
+    const lyricsFileInput = document.getElementById('lyricsFileInput');
+    const dropZone = document.getElementById('dropZone');
+    const dropOverlay = document.getElementById('dropOverlay');
+
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const btnStop = document.getElementById('btnStop');
+    const btnBackward = document.getElementById('btnBackward');
+    const btnForward = document.getElementById('btnForward');
+    const btnLoop = document.getElementById('btnLoop');
+    const btnPlaybackRate = document.getElementById('btnPlaybackRate');
+
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    const currentTimeEl = document.getElementById('currentTime');
+    const totalDurationEl = document.getElementById('totalDuration');
+
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumePercent = document.getElementById('volumePercent');
+    const btnMute = document.getElementById('btnMute');
+    const volumeIcon = document.getElementById('volumeIcon');
+
+    const vinylDisc = document.getElementById('vinylDisc');
+    const trackTitle = document.getElementById('trackTitle');
+    const trackArtist = document.getElementById('trackArtist');
+    const trackFormat = document.getElementById('trackFormat');
+
+    // Lyrics elements
+    const playerGrid = document.querySelector('.player-grid');
+    const btnToggleLyrics = document.getElementById('btnToggleLyrics');
+    const btnHideLyricsHeader = document.getElementById('btnHideLyricsHeader');
+    const toggleLyricsText = document.getElementById('toggleLyricsText');
+    const lyricsEyeIcon = document.getElementById('lyricsEyeIcon');
+    const lyricsContainer = document.getElementById('lyricsContainer');
+    const emptyLyricsPlaceholder = document.getElementById('emptyLyricsPlaceholder');
+    const btnUploadAudio = document.getElementById('btnUploadAudio');
+    const btnLoadDemo = document.getElementById('btnLoadDemo');
+    const btnUploadLyrics = document.getElementById('btnUploadLyrics');
+    const btnEditLyrics = document.getElementById('btnEditLyrics');
+
+    const lyricsModal = document.getElementById('lyricsModal');
+    const btnCloseLyricsModal = document.getElementById('btnCloseLyricsModal');
+    const btnCancelLyricsModal = document.getElementById('btnCancelLyricsModal');
+    const btnSaveLyricsModal = document.getElementById('btnSaveLyricsModal');
+    const lyricsTextarea = document.getElementById('lyricsTextarea');
+
+    // Audio Balance Elements
+    const btnAudioBalance = document.getElementById('btnAudioBalance');
+    const balanceBadge = document.getElementById('balanceBadge');
+    const btnQuickBalance = document.getElementById('btnQuickBalance');
+    const quickBalanceText = document.getElementById('quickBalanceText');
+    const balanceModal = document.getElementById('balanceModal');
+    const btnCloseBalanceModal = document.getElementById('btnCloseBalanceModal');
+    const btnDoneBalanceModal = document.getElementById('btnDoneBalanceModal');
+    const chkAudioNormalizer = document.getElementById('chkAudioNormalizer');
+    const panSlider = document.getElementById('panSlider');
+    const panValueText = document.getElementById('panValueText');
+    const eqButtons = document.querySelectorAll('[data-eq]');
+
+    const canvas = document.getElementById('visualizerCanvas');
+    const canvasCtx = canvas.getContext('2d');
+    const toastEl = document.getElementById('toast');
+
+    // --- State Variables ---
+    let lyricsData = []; // Array of { time: seconds, text: string, el: HTMLElement }
+    let activeLyricIndex = -1;
+    let isSeeking = false;
+    let isLooping = false;
+    let isLyricsHidden = false;
+    let lastVolume = 0.8;
+    const rates = [0.75, 1.0, 1.25, 1.5, 2.0];
+    let currentRateIndex = 1;
+
+    // Web Audio API Visualizer & Processing Setup
+    let audioCtx = null;
+    let analyser = null;
+    let audioSource = null;
+    let compressorNode = null;
+    let pannerNode = null;
+    let bassFilterNode = null;
+    let trebleFilterNode = null;
+    let isNormalizerActive = true;
+    let animationFrameId = null;
+
+    function initAudioContext() {
+      if (audioCtx) return;
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+
+        // 1. Analyser Node for Spectrum Visualizer
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+
+        // 2. Biquad Filters for Tone / EQ
+        bassFilterNode = audioCtx.createBiquadFilter();
+        bassFilterNode.type = 'lowshelf';
+        bassFilterNode.frequency.value = 250;
+        bassFilterNode.gain.value = 0;
+
+        trebleFilterNode = audioCtx.createBiquadFilter();
+        trebleFilterNode.type = 'highshelf';
+        trebleFilterNode.frequency.value = 3500;
+        trebleFilterNode.gain.value = 0;
+
+        // 3. Dynamics Compressor for Loudness Normalization & Volume Balance
+        compressorNode = audioCtx.createDynamicsCompressor();
+        applyNormalizerSettings(isNormalizerActive);
+
+        // 4. Stereo Panner for Left/Right Balance
+        if (audioCtx.createStereoPanner) {
+          pannerNode = audioCtx.createStereoPanner();
+          pannerNode.pan.value = 0;
+        }
+
+        // 5. Connect Source Node through the Audio Processing Graph
+        audioSource = audioCtx.createMediaElementSource(audio);
+
+        let node = audioSource;
+        node.connect(bassFilterNode);
+        node = bassFilterNode;
+
+        node.connect(trebleFilterNode);
+        node = trebleFilterNode;
+
+        node.connect(compressorNode);
+        node = compressorNode;
+
+        if (pannerNode) {
+          node.connect(pannerNode);
+          node = pannerNode;
+        }
+
+        node.connect(analyser);
+        analyser.connect(audioCtx.destination);
+      } catch (err) {
+        console.warn('AudioContext init note:', err);
+      }
+    }
+
+    // Loudness Normalizer Settings
+    function applyNormalizerSettings(active) {
+      isNormalizerActive = active;
+      if (compressorNode && audioCtx) {
+        const now = audioCtx.currentTime;
+        if (active) {
+          // Dynamic compression: levels volume spikes & raises soft quiet sections
+          compressorNode.threshold.setValueAtTime(-24, now);
+          compressorNode.knee.setValueAtTime(30, now);
+          compressorNode.ratio.setValueAtTime(12, now);
+          compressorNode.attack.setValueAtTime(0.003, now);
+          compressorNode.release.setValueAtTime(0.25, now);
+        } else {
+          // Transparent bypass
+          compressorNode.threshold.setValueAtTime(0, now);
+          compressorNode.ratio.setValueAtTime(1, now);
+        }
+      }
+
+      // Update UI badges
+      if (balanceBadge) {
+        balanceBadge.textContent = active ? 'ON' : 'OFF';
+        balanceBadge.classList.toggle('active', active);
+      }
+      if (quickBalanceText) {
+        quickBalanceText.textContent = active ? 'ON' : 'OFF';
+      }
+      if (btnAudioBalance) {
+        btnAudioBalance.classList.toggle('btn-active', active);
+      }
+      if (chkAudioNormalizer) {
+        chkAudioNormalizer.checked = active;
+      }
+    }
+
+    // Toggle Audio Balance Normalization
+    function toggleAudioBalance() {
+      initAudioContext();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      applyNormalizerSettings(!isNormalizerActive);
+      showToast(isNormalizerActive ? '音效平衡已開啟（自動平衡音量）' : '音效平衡已關閉（原始音訊輸出）');
+    }
+
+    // --- Lyrics Visibility Toggle Function ---
+    function toggleLyrics(forceState) {
+      if (typeof forceState === 'boolean') {
+        isLyricsHidden = forceState;
+      } else {
+        isLyricsHidden = !isLyricsHidden;
+      }
+
+      if (isLyricsHidden) {
+        playerGrid.classList.add('lyrics-hidden');
+        toggleLyricsText.textContent = '顯示歌詞';
+        btnToggleLyrics.classList.add('btn-active');
+        lyricsEyeIcon.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>`;
+        showToast('已隱藏歌詞面板');
+      } else {
+        playerGrid.classList.remove('lyrics-hidden');
+        toggleLyricsText.textContent = '隱藏歌詞';
+        btnToggleLyrics.classList.remove('btn-active');
+        lyricsEyeIcon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>`;
+        showToast('已顯示歌詞面板');
+      }
+      setTimeout(resizeCanvas, 360);
+    }
+
+    btnToggleLyrics.addEventListener('click', () => toggleLyrics());
+    if (btnHideLyricsHeader) {
+      btnHideLyricsHeader.addEventListener('click', () => toggleLyrics(true));
+    }
+
+    // Audio Balance Modal & Controls
+    btnAudioBalance.addEventListener('click', () => {
+      initAudioContext();
+      balanceModal.classList.add('show');
+    });
+
+    btnQuickBalance.addEventListener('click', toggleAudioBalance);
+
+    function closeBalanceModal() {
+      balanceModal.classList.remove('show');
+    }
+
+    btnCloseBalanceModal.addEventListener('click', closeBalanceModal);
+    btnDoneBalanceModal.addEventListener('click', closeBalanceModal);
+
+    chkAudioNormalizer.addEventListener('change', (e) => {
+      initAudioContext();
+      applyNormalizerSettings(e.target.checked);
+      showToast(e.target.checked ? '音效音量平衡：開啟' : '音效音量平衡：關閉');
+    });
+
+    // L/R Stereo Pan Slider
+    panSlider.addEventListener('input', (e) => {
+      initAudioContext();
+      const val = parseFloat(e.target.value);
+      if (pannerNode && audioCtx) {
+        pannerNode.pan.setValueAtTime(val, audioCtx.currentTime);
+      }
+      if (Math.abs(val) < 0.05) {
+        panValueText.textContent = '中央 (Center)';
+      } else if (val < 0) {
+        panValueText.textContent = `偏左 L ${Math.round(Math.abs(val) * 100)}%`;
+      } else {
+        panValueText.textContent = `偏右 R ${Math.round(val * 100)}%`;
+      }
+    });
+
+    // EQ Preset Modes
+    const eqPresets = {
+      flat: { bass: 0, treble: 0, name: '標準平衡' },
+      vocal: { bass: -2, treble: 4, name: '人聲突出' },
+      bass: { bass: 7, treble: 1, name: '低音增強' },
+      night: { bass: -4, treble: -5, name: '深夜柔和' }
+    };
+
+    eqButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        initAudioContext();
+        eqButtons.forEach(b => b.classList.remove('btn-active'));
+        btn.classList.add('btn-active');
+        const eqKey = btn.getAttribute('data-eq');
+        const preset = eqPresets[eqKey];
+        if (preset && bassFilterNode && trebleFilterNode && audioCtx) {
+          const now = audioCtx.currentTime;
+          bassFilterNode.gain.setValueAtTime(preset.bass, now);
+          trebleFilterNode.gain.setValueAtTime(preset.treble, now);
+          showToast(`已套用音效風格：${preset.name}`);
+        }
+      });
+    });
+
+    // Initial default active state for normalizer
+    applyNormalizerSettings(true);
+
+    // --- Toast Notification ---
+    let toastTimer = null;
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toastEl.classList.remove('show');
+      }, 2500);
+    }
+
+    // --- Time Formatter (mm:ss) ---
+    function formatTime(sec) {
+      if (isNaN(sec) || sec < 0) return '00:00';
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    // --- Audio File Handling ---
+    btnUploadAudio.addEventListener('click', () => audioFileInput.click());
+
+    audioFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) loadAudioFile(file);
+    });
+
+    function loadAudioFile(file) {
+      initAudioContext();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const objectUrl = URL.createObjectURL(file);
+      audio.src = objectUrl;
+
+      // Extract filename without extension
+      const fileName = file.name.replace(/\.[^/.]+$/, "");
+      trackTitle.textContent = fileName;
+      trackArtist.textContent = `本地音訊檔案 (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+      trackFormat.textContent = file.type || file.name.split('.').pop().toUpperCase();
+
+      showToast(`已載入音檔：${fileName}`);
+      audio.play().catch(e => console.log('Autoplay handled:', e));
+    }
+
+    // --- Demo Audio Generator (Using Web Audio API to synthesize a melodic lo-fi chill loop) ---
+    btnLoadDemo.addEventListener('click', () => {
+      initAudioContext();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      showToast('正在載入示範音樂...');
+      generateDemoAudioBlob().then(blob => {
+        const demoUrl = URL.createObjectURL(blob);
+        audio.src = demoUrl;
+        trackTitle.textContent = "星河漫步 (Starry Drift - Demo)";
+        trackArtist.textContent = "AuraWave Synthesizer";
+        trackFormat.textContent = "WAV • 44.1kHz";
+
+        // Load Built-in Demo Lyrics
+        const demoLRC = `[00:00.00]星河漫步 (Starry Drift) - AuraWave Demo
+[00:03.00]漫步在無垠的星夜之下
+[00:07.50]微風吹起音符的羽翼
+[00:12.00]旋律在空氣中靜靜綻放
+[00:16.80]點亮心中每一個微光角落
+[00:21.50]耳畔傳來的琴音如同潮汐
+[00:26.20]在時光之中輕輕低語
+[00:31.00]這是一首獻給你的夜晚詩篇
+[00:36.00]讓心靈隨著頻率自由漂流
+[00:41.20]夜色漸深，星光依舊璀璨
+[00:46.00]我們在音樂中找到平靜的港灣`;
+
+        parseAndRenderLyrics(demoLRC);
+        audio.play().catch(e => console.log('Autoplay handled:', e));
+        showToast('已載入示範曲與同步歌詞！');
+      });
+    });
+
+    // Helper: Synthesizes a calming 50-second chord progression into a valid WAV blob
+    function generateDemoAudioBlob() {
+      const sampleRate = 44100;
+      const duration = 50; // 50 seconds
+      const offlineCtx = new OfflineAudioContext(2, sampleRate * duration, sampleRate);
+
+      // Chords: Dm7 -> G7 -> Cmaj7 -> Am7 progression
+      const chords = [
+        [146.83, 220.00, 261.63, 329.63], // Dm7 (D3, A3, C4, E4)
+        [196.00, 246.94, 293.66, 349.23], // G7 (G3, B3, D4, F4)
+        [130.81, 196.00, 246.94, 329.63], // Cmaj7 (C3, G3, B3, E4)
+        [110.00, 164.81, 220.00, 261.63]  // Am7 (A2, E3, A3, C4)
+      ];
+
+      const barLen = 4.0; // 4 seconds per chord
+      const totalChords = Math.ceil(duration / barLen);
+
+      for (let i = 0; i < totalChords; i++) {
+        const chord = chords[i % chords.length];
+        const startTime = i * barLen;
+
+        chord.forEach((freq, idx) => {
+          // Warm Pad Oscillator
+          const osc = offlineCtx.createOscillator();
+          const gain = offlineCtx.createGain();
+          osc.type = idx === 0 ? 'triangle' : 'sine';
+          osc.frequency.setValueAtTime(freq, startTime);
+
+          // Gentle envelope
+          gain.gain.setValueAtTime(0, startTime);
+          gain.gain.linearRampToValueAtTime(0.08 / (idx + 1), startTime + 0.6);
+          gain.gain.setValueAtTime(0.08 / (idx + 1), startTime + barLen - 0.6);
+          gain.gain.linearRampToValueAtTime(0.0001, startTime + barLen);
+
+          osc.connect(gain);
+          gain.connect(offlineCtx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + barLen);
+        });
+
+        // Pluck Bell Arpeggio
+        chord.forEach((freq, idx) => {
+          const arpOsc = offlineCtx.createOscillator();
+          const arpGain = offlineCtx.createGain();
+          arpOsc.type = 'sine';
+          arpOsc.frequency.setValueAtTime(freq * 2, startTime + idx * 0.7);
+
+          const arpHit = startTime + idx * 0.7;
+          arpGain.gain.setValueAtTime(0, arpHit);
+          arpGain.gain.linearRampToValueAtTime(0.04, arpHit + 0.05);
+          arpGain.gain.exponentialRampToValueAtTime(0.0001, arpHit + 1.2);
+
+          arpOsc.connect(arpGain);
+          arpGain.connect(offlineCtx.destination);
+          arpOsc.start(arpHit);
+          arpOsc.stop(arpHit + 1.3);
+        });
+      }
+
+      return offlineCtx.startRendering().then(renderedBuffer => {
+        return audioBufferToWav(renderedBuffer);
+      });
+    }
+
+    // Convert AudioBuffer to WAV format Blob
+    function audioBufferToWav(buffer) {
+      const numOfChan = buffer.numberOfChannels;
+      const length = buffer.length * numOfChan * 2 + 44;
+      const out = new DataView(new ArrayBuffer(length));
+      const channels = [];
+      let sample = 0;
+      let offset = 0;
+      let pos = 0;
+
+      function setUint16(data) { out.setUint16(pos, data, true); pos += 2; }
+      function setUint32(data) { out.setUint32(pos, data, true); pos += 4; }
+
+      // RIFF identifier
+      setUint32(0x46464952); // "RIFF"
+      setUint32(length - 8);  // file length - 8
+      setUint32(0x45564157); // "WAVE"
+      setUint32(0x20746d66); // "fmt " chunk
+      setUint32(16);         // length = 16
+      setUint16(1);          // PCM (uncompressed)
+      setUint16(numOfChan);
+      setUint32(buffer.sampleRate);
+      setUint32(buffer.sampleRate * 2 * numOfChan); // avg bytes/sec
+      setUint16(numOfChan * 2);                    // block-align
+      setUint16(16);                               // 16-bit
+      setUint32(0x61746164); // "data" chunk
+      setUint32(length - pos - 4);
+
+      for (let i = 0; i < buffer.numberOfChannels; i++) {
+        channels.push(buffer.getChannelData(i));
+      }
+
+      while (offset < buffer.length) {
+        for (let i = 0; i < numOfChan; i++) {
+          sample = Math.max(-1, Math.min(1, channels[i][offset]));
+          sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+          out.setInt16(pos, sample, true);
+          pos += 2;
+        }
+        offset++;
+      }
+
+      return new Blob([out.buffer], { type: 'audio/wav' });
+    }
+
+    // --- Audio Playback Controls ---
+    function togglePlay() {
+      initAudioContext();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      if (!audio.src || audio.src === window.location.href) {
+        // If empty, auto click demo
+        btnLoadDemo.click();
+        return;
+      }
+
+      if (audio.paused) {
+        audio.play().catch(e => console.error(e));
+      } else {
+        audio.pause();
+      }
+    }
+
+    btnPlayPause.addEventListener('click', togglePlay);
+
+    btnStop.addEventListener('click', () => {
+      audio.pause();
+      audio.currentTime = 0;
+      updateProgressUI(0, audio.duration || 0);
+      showToast('已停止並回到開頭');
+    });
+
+    btnBackward.addEventListener('click', () => {
+      audio.currentTime = Math.max(0, audio.currentTime - 10);
+      showToast('後退 10 秒');
+    });
+
+    btnForward.addEventListener('click', () => {
+      audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 10);
+      showToast('前進 10 秒');
+    });
+
+    btnLoop.addEventListener('click', () => {
+      isLooping = !isLooping;
+      audio.loop = isLooping;
+      btnLoop.style.color = isLooping ? 'var(--accent-cyan)' : 'var(--text-muted)';
+      showToast(isLooping ? '單曲循環：開啟' : '單曲循環：關閉');
+    });
+
+    btnPlaybackRate.addEventListener('click', () => {
+      currentRateIndex = (currentRateIndex + 1) % rates.length;
+      const rate = rates[currentRateIndex];
+      audio.playbackRate = rate;
+      btnPlaybackRate.textContent = `${rate.toFixed(rate % 1 === 0 ? 1 : 2)}x`;
+      showToast(`播放速度：${rate}x`);
+    });
+
+    // Audio Event Listeners
+    audio.addEventListener('play', () => {
+      playIcon.style.display = 'none';
+      pauseIcon.style.display = 'block';
+      vinylDisc.classList.add('playing');
+      drawVisualizer();
+    });
+
+    audio.addEventListener('pause', () => {
+      playIcon.style.display = 'block';
+      pauseIcon.style.display = 'none';
+      vinylDisc.classList.remove('playing');
+    });
+
+    audio.addEventListener('ended', () => {
+      if (!isLooping) {
+        playIcon.style.display = 'block';
+        pauseIcon.style.display = 'none';
+        vinylDisc.classList.remove('playing');
+      }
+    });
+
+    audio.addEventListener('loadedmetadata', () => {
+      totalDurationEl.textContent = formatTime(audio.duration);
+      updateProgressUI(audio.currentTime, audio.duration);
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      if (!isSeeking) {
+        updateProgressUI(audio.currentTime, audio.duration);
+        syncLyricsWithTime(audio.currentTime);
+      }
+    });
+
+    function updateProgressUI(current, duration) {
+      currentTimeEl.textContent = formatTime(current);
+      if (duration && !isNaN(duration) && duration > 0) {
+        const pct = (current / duration) * 100;
+        progressFill.style.width = `${pct}%`;
+      } else {
+        progressFill.style.width = '0%';
+      }
+    }
+
+    // --- Interactive Scrubbing (Progress Bar) ---
+    progressBar.addEventListener('click', (e) => {
+      if (!audio.duration) return;
+      const rect = progressBar.getBoundingClientRect();
+      const clickPos = (e.clientX - rect.left) / rect.width;
+      audio.currentTime = Math.max(0, Math.min(audio.duration, clickPos * audio.duration));
+    });
+
+    // --- Volume Control ---
+    volumeSlider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      setVolume(val);
+    });
+
+    function setVolume(val) {
+      audio.volume = val;
+      volumeSlider.value = val;
+      volumePercent.textContent = `${Math.round(val * 100)}%`;
+      if (val > 0) lastVolume = val;
+
+      // Update icon dynamically
+      if (val === 0) {
+        volumeIcon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>`;
+      } else if (val < 0.5) {
+        volumeIcon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>`;
+      } else {
+        volumeIcon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>`;
+      }
+    }
+
+    btnMute.addEventListener('click', () => {
+      if (audio.volume > 0) {
+        setVolume(0);
+        showToast('已靜音');
+      } else {
+        setVolume(lastVolume || 0.8);
+        showToast(`音量恢復至 ${Math.round((lastVolume || 0.8) * 100)}%`);
+      }
+    });
+
+    // --- Lyrics Parsing & Rendering ---
+    btnUploadLyrics.addEventListener('click', () => lyricsFileInput.click());
+
+    lyricsFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          parseAndRenderLyrics(evt.target.result);
+          showToast(`已載入歌詞檔案：${file.name}`);
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    // Modal Trigger
+    btnEditLyrics.addEventListener('click', () => {
+      lyricsModal.classList.add('show');
+    });
+
+    function closeLyricsModal() {
+      lyricsModal.classList.remove('show');
+    }
+
+    btnCloseLyricsModal.addEventListener('click', closeLyricsModal);
+    btnCancelLyricsModal.addEventListener('click', closeLyricsModal);
+
+    btnSaveLyricsModal.addEventListener('click', () => {
+      const rawText = lyricsTextarea.value.trim();
+      if (rawText) {
+        parseAndRenderLyrics(rawText);
+        showToast('歌詞已更新套用！');
+      }
+      closeLyricsModal();
+    });
+
+    function parseAndRenderLyrics(text) {
+      lyricsData = [];
+      lyricsContainer.innerHTML = '';
+      activeLyricIndex = -1;
+
+      const lines = text.split('\n');
+      const timeRegex = /\[(\d{2}):(\d{2})(?:\.(\d{2,3}))?\]/g;
+      let hasTimedLines = false;
+
+      lines.forEach((line) => {
+        let match;
+        let lineTimes = [];
+        let cleanText = line.replace(timeRegex, (m) => {
+          // Parse time
+          const p = m.slice(1, -1).split(':');
+          const min = parseInt(p[0], 10);
+          const sec = parseFloat(p[1]);
+          lineTimes.push(min * 60 + sec);
+          return '';
+        }).trim();
+
+        if (lineTimes.length > 0) {
+          hasTimedLines = true;
+          lineTimes.forEach(t => {
+            if (cleanText.length > 0) {
+              lyricsData.push({ time: t, text: cleanText });
+            }
+          });
+        }
+      });
+
+      // Fallback: If no timestamps found, evenly space them across duration
+      if (!hasTimedLines) {
+        const validLines = lines.map(l => l.trim()).filter(l => l.length > 0);
+        const duration = audio.duration || 60;
+        const interval = duration / (validLines.length + 1);
+        validLines.forEach((l, idx) => {
+          lyricsData.push({ time: (idx + 1) * interval, text: l });
+        });
+      }
+
+      // Sort by timestamp
+      lyricsData.sort((a, b) => a.time - b.time);
+
+      if (lyricsData.length === 0) {
+        lyricsContainer.appendChild(emptyLyricsPlaceholder);
+        return;
+      }
+
+      // Render DOM Elements
+      lyricsData.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'lyric-line';
+        div.textContent = item.text;
+        div.title = `點擊跳至 ${formatTime(item.time)}`;
+
+        // Click lyric to jump to time!
+        div.addEventListener('click', () => {
+          audio.currentTime = item.time;
+          if (audio.paused) audio.play();
+        });
+
+        item.el = div;
+        lyricsContainer.appendChild(div);
+      });
+
+      // Keep textarea synced
+      lyricsTextarea.value = text;
+    }
+
+    function syncLyricsWithTime(currentTime) {
+      if (lyricsData.length === 0) return;
+
+      // Find current active lyric line
+      let currentIndex = -1;
+      for (let i = 0; i < lyricsData.length; i++) {
+        if (currentTime >= lyricsData[i].time) {
+          currentIndex = i;
+        } else {
+          break;
+        }
+      }
+
+      if (currentIndex !== activeLyricIndex) {
+        activeLyricIndex = currentIndex;
+
+        lyricsData.forEach((item, i) => {
+          if (!item.el) return;
+          if (i === activeLyricIndex) {
+            item.el.classList.add('active');
+            item.el.classList.remove('passed');
+
+            // Smooth scroll into center view
+            const containerHeight = lyricsContainer.clientHeight;
+            const elementTop = item.el.offsetTop;
+            const elementHeight = item.el.clientHeight;
+            lyricsContainer.scrollTo({
+              top: elementTop - containerHeight / 2 + elementHeight / 2,
+              behavior: 'smooth'
+            });
+          } else if (i < activeLyricIndex) {
+            item.el.classList.remove('active');
+            item.el.classList.add('passed');
+          } else {
+            item.el.classList.remove('active');
+            item.el.classList.remove('passed');
+          }
+        });
+      }
+    }
+
+    // --- Realtime Audio Spectrum Visualizer ---
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
+      canvas.height = canvas.parentElement.clientHeight * window.devicePixelRatio;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function drawVisualizer() {
+      if (!canvasCtx) return;
+      const width = canvas.width;
+      const height = canvas.height;
+
+      canvasCtx.clearRect(0, 0, width, height);
+
+      if (analyser && !audio.paused) {
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyser.getByteFrequencyData(dataArray);
+
+        const barCount = 32;
+        const barWidth = (width / barCount) - 3;
+        let x = 2;
+
+        for (let i = 0; i < barCount; i++) {
+          const val = dataArray[i * 2] || 0;
+          const barHeight = Math.max(4, (val / 255) * height * 0.95);
+
+          // Gradient color for visualizer
+          const grad = canvasCtx.createLinearGradient(0, height, 0, height - barHeight);
+          grad.addColorStop(0, '#6366f1');
+          grad.addColorStop(0.5, '#3b82f6');
+          grad.addColorStop(1, '#06b6d4');
+
+          canvasCtx.fillStyle = grad;
+          canvasCtx.beginPath();
+          canvasCtx.roundRect(x, height - barHeight, barWidth, barHeight, 4);
+          canvasCtx.fill();
+
+          x += barWidth + 3;
+        }
+
+        animationFrameId = requestAnimationFrame(drawVisualizer);
+      } else {
+        // Idle gentle wave animation
+        const time = Date.now() * 0.003;
+        const barCount = 32;
+        const barWidth = (width / barCount) - 3;
+        let x = 2;
+
+        for (let i = 0; i < barCount; i++) {
+          const barHeight = Math.sin(time + i * 0.25) * 8 + 12;
+          canvasCtx.fillStyle = 'rgba(99, 102, 241, 0.25)';
+          canvasCtx.beginPath();
+          canvasCtx.roundRect(x, height - barHeight, barWidth, barHeight, 3);
+          canvasCtx.fill();
+          x += barWidth + 3;
+        }
+      }
+    }
+    drawVisualizer();
+
+    // --- Drag and Drop File Handlers ---
+    ['dragenter', 'dragover'].forEach(eventName => {
+      window.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropOverlay.classList.add('active');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      window.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (eventName === 'drop' || e.clientX <= 0 || e.clientY <= 0) {
+          dropOverlay.classList.remove('active');
+        }
+      });
+    });
+
+    window.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (!files || files.length === 0) return;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type.startsWith('audio/') || /\.(mp3|wav|ogg|flac|m4a)$/i.test(file.name)) {
+          loadAudioFile(file);
+        } else if (/\.(lrc|txt)$/i.test(file.name)) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            parseAndRenderLyrics(evt.target.result);
+            showToast(`已載入歌詞檔案：${file.name}`);
+          };
+          reader.readAsText(file);
+        }
+      }
+    });
+
+    // --- Global Keyboard Shortcuts ---
+    window.addEventListener('keydown', (e) => {
+      // Don't trigger shortcuts when typing inside modal or textarea
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      switch(e.code) {
+        case 'Space':
+          e.preventDefault();
+          togglePlay();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          btnBackward.click();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          btnForward.click();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setVolume(Math.min(1, audio.volume + 0.05));
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          setVolume(Math.max(0, audio.volume - 0.05));
+          break;
+        case 'KeyM':
+          btnMute.click();
+          break;
+        case 'KeyS':
+          btnStop.click();
+          break;
+        case 'KeyL':
+          toggleLyrics();
+          break;
+        case 'KeyB':
+          toggleAudioBalance();
+          break;
+      }
+    });
+
+    // Auto-trigger demo prompt on load
+    window.addEventListener('DOMContentLoaded', () => {
+      resizeCanvas();
+    });
+  </script>
+</body>
+</html>
