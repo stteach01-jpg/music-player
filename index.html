@@ -1093,7 +1093,7 @@
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
           </svg>
           <span>課堂曲庫</span>
-          <span class="badge-indicator active" id="jukeboxCountBadge" style="background:#10b981;">3首</span>
+          <span class="badge-indicator active" id="jukeboxCountBadge" style="background:#10b981;">2首</span>
         </button>
 
         <!-- Audio Balance Button -->
@@ -1535,7 +1535,7 @@
     const btnPrevTrack = document.getElementById('btnPrevTrack');
     const btnNextTrack = document.getElementById('btnNextTrack');
 
-    // --- Classroom Playlist Database (社頭國中校歌 & 課堂曲庫) ---
+    // --- Classroom Playlist Database (社頭國中校歌) ---
     const classroomPlaylist = [
       {
         id: "shezhong_chorus",
@@ -1547,19 +1547,22 @@
         src: "audio/school_song_chorus.m4a",
         durationText: "01:29",
         lyrics: `[00:00.00]社頭國中校歌 (活潑版・合唱)
-[00:04.00]♪ 前奏 ♪
-[00:09.50]玉山崔巍 東海汪洋
-[00:15.80]地靈人傑 乃我鄉邦
-[00:22.20]手腦並用 發憤圖強
-[00:28.50]德智體群 四育宏揚
-[00:35.00]社中我校 勇往發皇
-[00:43.00]♪ 間奏 ♪
-[00:50.50]玉山崔巍 東海汪洋
-[00:56.80]地靈人傑 乃我鄉邦
-[01:03.20]手腦並用 發憤圖強
-[01:09.80]德智體群 四育宏揚
-[01:16.20]社中我校 勇往發皇
-[01:24.00]♪ 尾奏 ♪`
+[00:04.00]♪ 前奏準備 ♪
+[00:13.65]玉山崔巍 東海汪洋
+[00:18.60]地靈人傑 乃我鄉邦
+[00:23.40]手腦並用 發憤圖強
+[00:28.15]德智體群 四育宏揚
+[00:32.95]社中我校 勇往發皇
+[00:37.00]♪ 間奏 ♪
+[00:46.80]玉山崔巍 東海汪洋
+[00:51.85]地靈人傑 乃我鄉邦
+[00:56.80]手腦並用 發憤圖強
+[01:01.20]德智體群 四育宏揚
+[01:05.70]社中我校 勇往發皇
+[01:10.80]社中我校 勇往發皇
+[01:15.60]社中我校 勇往發皇
+[01:20.40]勇往發皇！
+[01:25.00]♪ 尾奏禮成 ♪`
       },
       {
         id: "shezhong_instrumental",
@@ -1571,40 +1574,22 @@
         src: "audio/school_song_instrumental.m4a",
         durationText: "01:33",
         lyrics: `[00:00.00]社頭國中校歌 (活潑版・伴奏)
-[00:04.00]♪ 前奏 ♪
-[00:09.50]玉山崔巍 東海汪洋
-[00:15.80]地靈人傑 乃我鄉邦
-[00:22.20]手腦並用 發憤圖強
-[00:28.50]德智體群 四育宏揚
-[00:35.00]社中我校 勇往發皇
-[00:43.00]♪ 間奏 ♪
-[00:50.50]玉山崔巍 東海汪洋
-[00:56.80]地靈人傑 乃我鄉邦
-[01:03.20]手腦並用 發憤圖強
-[01:09.80]德智體群 四育宏揚
-[01:16.20]社中我校 勇往發皇
-[01:25.00]♪ 尾奏 ♪`
-      },
-      {
-        id: "demo_lofi",
-        title: "星河漫步 (Lo-Fi 課堂專注)",
-        artist: "AuraWave Synthesizer",
-        category: "專注自習 / 沉靜閱讀",
-        tag: "輕音樂",
-        format: "WAV • 44.1kHz",
-        isSynthesized: true,
-        durationText: "00:50",
-        lyrics: `[00:00.00]星河漫步 (Starry Drift) - AuraWave Demo
-[00:03.00]漫步在無垠的星夜之下
-[00:07.50]微風吹起音符的羽翼
-[00:12.00]旋律在空氣中靜靜綻放
-[00:16.80]點亮心中每一個微光角落
-[00:21.50]耳畔傳來的琴音如同潮汐
-[00:26.20]在時光之中輕輕低語
-[00:31.00]這是一首獻給你的夜晚詩篇
-[00:36.00]讓心靈隨著頻率自由漂流
-[00:41.20]夜色漸深，星光依舊璀璨
-[00:46.00]我們在音樂中找到平靜的港灣`
+[00:04.50]♪ 前奏準備 ♪
+[00:14.10]玉山崔巍 東海汪洋
+[00:19.05]地靈人傑 乃我鄉邦
+[00:23.85]手腦並用 發憤圖強
+[00:28.60]德智體群 四育宏揚
+[00:33.40]社中我校 勇往發皇
+[00:37.50]♪ 間奏 ♪
+[00:47.25]玉山崔巍 東海汪洋
+[00:52.30]地靈人傑 乃我鄉邦
+[00:57.25]手腦並用 發憤圖強
+[01:01.65]德智體群 四育宏揚
+[01:06.15]社中我校 勇往發皇
+[01:11.25]社中我校 勇往發皇
+[01:16.05]社中我校 勇往發皇
+[01:20.85]勇往發皇！
+[01:25.50]♪ 尾奏禮成 ♪`
       }
     ];
 
@@ -1925,15 +1910,8 @@
       // Update lyrics
       parseAndRenderLyrics(track.lyrics);
 
-      if (track.isSynthesized) {
-        generateDemoAudioBlob().then(blob => {
-          audio.src = URL.createObjectURL(blob);
-          if (autoPlay) audio.play().catch(e => console.log('Autoplay handled:', e));
-        });
-      } else {
-        audio.src = track.src;
-        if (autoPlay) audio.play().catch(e => console.log('Autoplay handled:', e));
-      }
+      audio.src = track.src;
+      if (autoPlay) audio.play().catch(e => console.log('Autoplay handled:', e));
 
       showToast(`已載入課堂曲目：${track.title}`);
       renderJukeboxList();
