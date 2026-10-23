@@ -284,6 +284,107 @@
       min-width: 28px;
     }
 
+    /* Jukebox Track Item & Modal */
+    .jukebox-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 6px;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
+    .jukebox-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+      min-height: 68px; /* Touch friendly on smart boards */
+    }
+
+    .jukebox-item:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .jukebox-item.active {
+      background: rgba(99, 102, 241, 0.18);
+      border-color: rgba(99, 102, 241, 0.7);
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.3);
+    }
+
+    .jukebox-item-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .jukebox-item-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+      font-size: 1.2rem;
+    }
+
+    .jukebox-item.active .jukebox-item-icon {
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+    }
+
+    .jukebox-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow: hidden;
+    }
+
+    .jukebox-item-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .jukebox-item-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .jukebox-tag {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .jukebox-tag.tag-school {
+      background: rgba(16, 185, 129, 0.2);
+      color: #6ee7b7;
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
     /* Dual-Panel Layout */
     .player-grid {
       display: grid;
@@ -985,6 +1086,16 @@
       </div>
 
       <div class="header-actions">
+        <!-- Classroom Jukebox Trigger -->
+        <button class="btn btn-primary" id="btnJukebox" title="開啟內建課堂曲庫（社頭國中校歌）">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span>課堂曲庫</span>
+          <span class="badge-indicator active" id="jukeboxCountBadge" style="background:#10b981;">3首</span>
+        </button>
+
         <!-- Audio Balance Button -->
         <button class="btn" id="btnAudioBalance" title="平衡音效音量（防止爆音、平準化動態音量與聲道調整）">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1011,16 +1122,8 @@
           <span id="toggleLyricsText">隱藏歌詞</span>
         </button>
 
-        <!-- Demo Song Trigger -->
-        <button class="btn" id="btnLoadDemo" title="切換至內建範例音樂">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-          </svg>
-          範例示範曲
-        </button>
-
         <!-- Audio Upload Trigger -->
-        <button class="btn btn-primary" id="btnUploadAudio">
+        <button class="btn" id="btnUploadAudio" title="電腦本機上傳音檔">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="17 8 12 3 7 8"></polyline>
@@ -1075,6 +1178,14 @@
 
         <!-- Playback Main Controls -->
         <div class="controls-main">
+          <!-- Previous Track (Touch friendly) -->
+          <button class="control-btn" id="btnPrevTrack" title="上一首 ([)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="19 20 9 12 19 4 19 20"></polygon>
+              <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></line>
+            </svg>
+          </button>
+
           <!-- Rewind -10s -->
           <button class="control-btn" id="btnBackward" title="倒退 10 秒 (←)">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1107,6 +1218,14 @@
               <path d="M13 17l5-5-5-5M6 17l5-5-5-5"/>
             </svg>
             <span class="btn-skip-label">10</span>
+          </button>
+
+          <!-- Next Track (Touch friendly) -->
+          <button class="control-btn" id="btnNextTrack" title="下一首 (])">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 4 15 12 5 20 5 4"></polygon>
+              <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></line>
+            </svg>
           </button>
 
           <!-- Loop Mode -->
@@ -1202,14 +1321,50 @@
       <div>支援 MP3, WAV, FLAC, OGG, M4A 等音訊格式及 .LRC 時間軸歌詞檔</div>
       <div class="shortcuts-pill">
         <span><span class="kbd">空白鍵</span> 播放/暫停</span>
+        <span><span class="kbd">[</span> <span class="kbd">]</span> 上/下一首</span>
         <span><span class="kbd">←</span> <span class="kbd">→</span> ±10秒</span>
         <span><span class="kbd">↑</span> <span class="kbd">↓</span> 音量</span>
-        <span><span class="kbd">S</span> 停止</span>
-        <span><span class="kbd">M</span> 靜音</span>
+        <span><span class="kbd">J</span> 課堂曲庫</span>
         <span><span class="kbd">L</span> 隱藏/顯示歌詞</span>
         <span><span class="kbd">B</span> 音效平衡</span>
+        <span><span class="kbd">S</span> 停止</span>
       </div>
     </footer>
+  </div>
+
+  <!-- Modal: Classroom Jukebox -->
+  <div class="modal-backdrop" id="jukeboxModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #10b981, #06b6d4); display:flex; align-items:center; justify-content:center; color:#fff;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title" style="margin:0;">課堂內建曲庫</h3>
+            <p style="font-size:0.75rem; color:var(--text-dim); margin-top:2px;">宏碁智慧黑板一鍵即點即播，免上傳、免找隨身碟</p>
+          </div>
+        </div>
+        <button class="modal-close" id="btnCloseJukeboxModal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Jukebox Track Items Container -->
+      <div class="jukebox-list" id="jukeboxList">
+        <!-- Rendered dynamically by JavaScript -->
+      </div>
+
+      <div class="modal-actions" style="margin-top:8px;">
+        <button class="btn btn-primary" id="btnDoneJukeboxModal" style="width:100%; justify-content:center;">返回播放器</button>
+      </div>
+    </div>
   </div>
 
   <!-- Modal: Paste / Edit Lyrics -->
@@ -1371,7 +1526,90 @@
     const canvasCtx = canvas.getContext('2d');
     const toastEl = document.getElementById('toast');
 
+    // Jukebox Elements
+    const btnJukebox = document.getElementById('btnJukebox');
+    const jukeboxModal = document.getElementById('jukeboxModal');
+    const btnCloseJukeboxModal = document.getElementById('btnCloseJukeboxModal');
+    const btnDoneJukeboxModal = document.getElementById('btnDoneJukeboxModal');
+    const jukeboxList = document.getElementById('jukeboxList');
+    const btnPrevTrack = document.getElementById('btnPrevTrack');
+    const btnNextTrack = document.getElementById('btnNextTrack');
+
+    // --- Classroom Playlist Database (社頭國中校歌 & 課堂曲庫) ---
+    const classroomPlaylist = [
+      {
+        id: "shezhong_chorus",
+        title: "社頭國中校歌 (活潑版・合唱)",
+        artist: "彰化縣立社頭國民中學",
+        category: "全校集會 / 典禮齊唱",
+        tag: "合唱版",
+        format: "M4A • 課堂內建",
+        src: "audio/school_song_chorus.m4a",
+        durationText: "01:29",
+        lyrics: `[00:00.00]社頭國中校歌 (活潑版・合唱)
+[00:04.00]♪ 前奏 ♪
+[00:09.50]玉山崔巍 東海汪洋
+[00:15.80]地靈人傑 乃我鄉邦
+[00:22.20]手腦並用 發憤圖強
+[00:28.50]德智體群 四育宏揚
+[00:35.00]社中我校 勇往發皇
+[00:43.00]♪ 間奏 ♪
+[00:50.50]玉山崔巍 東海汪洋
+[00:56.80]地靈人傑 乃我鄉邦
+[01:03.20]手腦並用 發憤圖強
+[01:09.80]德智體群 四育宏揚
+[01:16.20]社中我校 勇往發皇
+[01:24.00]♪ 尾奏 ♪`
+      },
+      {
+        id: "shezhong_instrumental",
+        title: "社頭國中校歌 (活潑版・伴奏)",
+        artist: "彰化縣立社頭國民中學",
+        category: "學生練唱 / 升旗伴奏",
+        tag: "純伴奏",
+        format: "M4A • 課堂內建",
+        src: "audio/school_song_instrumental.m4a",
+        durationText: "01:33",
+        lyrics: `[00:00.00]社頭國中校歌 (活潑版・伴奏)
+[00:04.00]♪ 前奏 ♪
+[00:09.50]玉山崔巍 東海汪洋
+[00:15.80]地靈人傑 乃我鄉邦
+[00:22.20]手腦並用 發憤圖強
+[00:28.50]德智體群 四育宏揚
+[00:35.00]社中我校 勇往發皇
+[00:43.00]♪ 間奏 ♪
+[00:50.50]玉山崔巍 東海汪洋
+[00:56.80]地靈人傑 乃我鄉邦
+[01:03.20]手腦並用 發憤圖強
+[01:09.80]德智體群 四育宏揚
+[01:16.20]社中我校 勇往發皇
+[01:25.00]♪ 尾奏 ♪`
+      },
+      {
+        id: "demo_lofi",
+        title: "星河漫步 (Lo-Fi 課堂專注)",
+        artist: "AuraWave Synthesizer",
+        category: "專注自習 / 沉靜閱讀",
+        tag: "輕音樂",
+        format: "WAV • 44.1kHz",
+        isSynthesized: true,
+        durationText: "00:50",
+        lyrics: `[00:00.00]星河漫步 (Starry Drift) - AuraWave Demo
+[00:03.00]漫步在無垠的星夜之下
+[00:07.50]微風吹起音符的羽翼
+[00:12.00]旋律在空氣中靜靜綻放
+[00:16.80]點亮心中每一個微光角落
+[00:21.50]耳畔傳來的琴音如同潮汐
+[00:26.20]在時光之中輕輕低語
+[00:31.00]這是一首獻給你的夜晚詩篇
+[00:36.00]讓心靈隨著頻率自由漂流
+[00:41.20]夜色漸深，星光依舊璀璨
+[00:46.00]我們在音樂中找到平靜的港灣`
+      }
+    ];
+
     // --- State Variables ---
+    let currentTrackIndex = 0;
     let lyricsData = []; // Array of { time: seconds, text: string, el: HTMLElement }
     let activeLyricIndex = -1;
     let isSeeking = false;
@@ -1632,39 +1870,102 @@
       audio.play().catch(e => console.log('Autoplay handled:', e));
     }
 
-    // --- Demo Audio Generator (Using Web Audio API to synthesize a melodic lo-fi chill loop) ---
-    btnLoadDemo.addEventListener('click', () => {
+    // --- Jukebox (課堂曲庫) Functions ---
+    function renderJukeboxList() {
+      if (!jukeboxList) return;
+      jukeboxList.innerHTML = '';
+      classroomPlaylist.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = `jukebox-item ${index === currentTrackIndex ? 'active' : ''}`;
+        
+        const isSchoolSong = item.id.includes('shezhong');
+        const iconText = isSchoolSong ? '🏫' : '🌌';
+        const tagClass = isSchoolSong ? 'tag-school' : '';
+
+        div.innerHTML = `
+          <div class="jukebox-item-left">
+            <div class="jukebox-item-icon">${iconText}</div>
+            <div class="jukebox-item-info">
+              <div class="jukebox-item-title">${item.title}</div>
+              <div class="jukebox-item-meta">
+                <span class="jukebox-tag ${tagClass}">${item.tag}</span>
+                <span>${item.category}</span>
+                <span style="font-variant-numeric: tabular-nums;">• ${item.durationText}</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-sm ${index === currentTrackIndex ? 'btn-primary' : ''} jukebox-btn-play">
+            ${index === currentTrackIndex ? '目前曲目' : '點播'}
+          </button>
+        `;
+
+        div.addEventListener('click', () => {
+          loadTrackByIndex(index, true);
+          closeJukeboxModal();
+        });
+
+        jukeboxList.appendChild(div);
+      });
+    }
+
+    function loadTrackByIndex(index, autoPlay = true) {
+      if (index < 0 || index >= classroomPlaylist.length) return;
+      currentTrackIndex = index;
+      const track = classroomPlaylist[index];
+
       initAudioContext();
       if (audioCtx && audioCtx.state === 'suspended') {
         audioCtx.resume();
       }
 
-      showToast('正在載入示範音樂...');
-      generateDemoAudioBlob().then(blob => {
-        const demoUrl = URL.createObjectURL(blob);
-        audio.src = demoUrl;
-        trackTitle.textContent = "星河漫步 (Starry Drift - Demo)";
-        trackArtist.textContent = "AuraWave Synthesizer";
-        trackFormat.textContent = "WAV • 44.1kHz";
+      trackTitle.textContent = track.title;
+      trackArtist.textContent = track.artist;
+      trackFormat.textContent = track.format;
 
-        // Load Built-in Demo Lyrics
-        const demoLRC = `[00:00.00]星河漫步 (Starry Drift) - AuraWave Demo
-[00:03.00]漫步在無垠的星夜之下
-[00:07.50]微風吹起音符的羽翼
-[00:12.00]旋律在空氣中靜靜綻放
-[00:16.80]點亮心中每一個微光角落
-[00:21.50]耳畔傳來的琴音如同潮汐
-[00:26.20]在時光之中輕輕低語
-[00:31.00]這是一首獻給你的夜晚詩篇
-[00:36.00]讓心靈隨著頻率自由漂流
-[00:41.20]夜色漸深，星光依舊璀璨
-[00:46.00]我們在音樂中找到平靜的港灣`;
+      // Update lyrics
+      parseAndRenderLyrics(track.lyrics);
 
-        parseAndRenderLyrics(demoLRC);
-        audio.play().catch(e => console.log('Autoplay handled:', e));
-        showToast('已載入示範曲與同步歌詞！');
+      if (track.isSynthesized) {
+        generateDemoAudioBlob().then(blob => {
+          audio.src = URL.createObjectURL(blob);
+          if (autoPlay) audio.play().catch(e => console.log('Autoplay handled:', e));
+        });
+      } else {
+        audio.src = track.src;
+        if (autoPlay) audio.play().catch(e => console.log('Autoplay handled:', e));
+      }
+
+      showToast(`已載入課堂曲目：${track.title}`);
+      renderJukeboxList();
+    }
+
+    function openJukeboxModal() {
+      renderJukeboxList();
+      jukeboxModal.classList.add('show');
+    }
+
+    function closeJukeboxModal() {
+      jukeboxModal.classList.remove('show');
+    }
+
+    if (btnJukebox) btnJukebox.addEventListener('click', openJukeboxModal);
+    if (btnCloseJukeboxModal) btnCloseJukeboxModal.addEventListener('click', closeJukeboxModal);
+    if (btnDoneJukeboxModal) btnDoneJukeboxModal.addEventListener('click', closeJukeboxModal);
+
+    // Prev / Next track navigation (Touch & Click)
+    if (btnPrevTrack) {
+      btnPrevTrack.addEventListener('click', () => {
+        const newIndex = (currentTrackIndex - 1 + classroomPlaylist.length) % classroomPlaylist.length;
+        loadTrackByIndex(newIndex, true);
       });
-    });
+    }
+
+    if (btnNextTrack) {
+      btnNextTrack.addEventListener('click', () => {
+        const newIndex = (currentTrackIndex + 1) % classroomPlaylist.length;
+        loadTrackByIndex(newIndex, true);
+      });
+    }
 
     // Helper: Synthesizes a calming 50-second chord progression into a valid WAV blob
     function generateDemoAudioBlob() {
@@ -1783,8 +2084,8 @@
       }
 
       if (!audio.src || audio.src === window.location.href) {
-        // If empty, auto click demo
-        btnLoadDemo.click();
+        // If empty, auto load track 0 (社頭國中校歌 合唱版)
+        loadTrackByIndex(0, true);
         return;
       }
 
@@ -2198,12 +2499,22 @@
         case 'KeyB':
           toggleAudioBalance();
           break;
+        case 'KeyJ':
+          btnJukebox.click();
+          break;
+        case 'BracketLeft':
+          btnPrevTrack.click();
+          break;
+        case 'BracketRight':
+          btnNextTrack.click();
+          break;
       }
     });
 
-    // Auto-trigger demo prompt on load
+    // Auto-trigger load track 0 (社頭國中校歌) on load
     window.addEventListener('DOMContentLoaded', () => {
       resizeCanvas();
+      loadTrackByIndex(0, false);
     });
   </script>
 </body>
