@@ -1,4 +1,4 @@
-# 🎵 AuraWave 線上音樂播放器 (Online Music Player)
+# 🎵 Olive's Player 線上音樂播放器 (Online Music Player)
 
 > 🌐 **線上公開體驗網址**：[https://stteach01-jpg.github.io/music-player/](https://stteach01-jpg.github.io/music-player/)  
 > 📦 **GitHub 儲存庫**：[https://github.com/stteach01-jpg/music-player](https://github.com/stteach01-jpg/music-player)
