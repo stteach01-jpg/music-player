@@ -385,6 +385,12 @@
       border-color: rgba(16, 185, 129, 0.4);
     }
 
+    .jukebox-tag.tag-anthem {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+
     /* Dual-Panel Layout */
     .player-grid {
       display: grid;
@@ -1087,7 +1093,7 @@
 
       <div class="header-actions">
         <!-- Classroom Jukebox Trigger -->
-        <button class="btn btn-primary" id="btnJukebox" title="開啟內建課堂曲庫（社頭國中校歌）">
+        <button class="btn btn-primary" id="btnJukebox" title="開啟內建課堂曲庫（國歌・社頭國中校歌）">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
@@ -1582,6 +1588,24 @@
 [00:57.45]手腦並用 發憤圖強
 [01:02.25]德智體群 四育宏揚
 [01:07.05]社中我校 勇往發皇`
+      },
+      {
+        id: "national_anthem_vocal",
+        title: "中華民國國歌 (輕快人聲版)",
+        artist: "中華民國海軍司令部",
+        category: "升旗集會 / 課堂練唱",
+        tag: "輕快人聲",
+        format: "MP3 • 課堂內建",
+        src: "audio/national_anthem_vocal.mp3",
+        durationText: "01:13",
+        lyrics: `[00:00.00]中華民國國歌 (輕快人聲版)
+[00:04.00]♪ 前奏準備 ♪
+[00:16.95]三民主義 吾黨所宗
+[00:23.55]以建民國 以進大同
+[00:28.60]咨爾多士 為民前鋒
+[00:35.95]夙夜匪懈 主義是從
+[00:46.30]矢勤矢勇 必信必忠
+[00:52.05]一心一德 貫徹始終`
       }
     ];
 
@@ -1855,9 +1879,15 @@
         const div = document.createElement('div');
         div.className = `jukebox-item ${index === currentTrackIndex ? 'active' : ''}`;
         
-        const isSchoolSong = item.id.includes('shezhong');
-        const iconText = isSchoolSong ? '🏫' : '🌌';
-        const tagClass = isSchoolSong ? 'tag-school' : '';
+        let iconText = '🎵';
+        let tagClass = '';
+        if (item.id.includes('shezhong')) {
+          iconText = '🏫';
+          tagClass = 'tag-school';
+        } else if (item.id.includes('anthem')) {
+          iconText = '🇹🇼';
+          tagClass = 'tag-anthem';
+        }
 
         div.innerHTML = `
           <div class="jukebox-item-left">
